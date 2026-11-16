@@ -180,7 +180,7 @@ async function publish() {
   const platforms = [...$('platList').querySelectorAll('input:checked')].map(i => i.value);
   if (!platforms.length) return;
   const rootPath = $('nasPath').value.trim();
-  if (!rootPath.startsWith('/')) { alert('请先填 NAS 目录在本机的绝对路径'); return; }
+  if (!/^(\/|[a-zA-Z]:[\\/]|\\\\)/.test(rootPath)) { alert('请先填 NAS 目录在本机的绝对路径'); return; }
   try { localStorage.setItem(PATH_KEY, rootPath); } catch { /* 无痕模式 */ }
   const win = await chrome.windows.getCurrent();
   // 文件夹句柄不能跨进程传，只传相对路径和 publish.json 内容；流程在插件后台跑

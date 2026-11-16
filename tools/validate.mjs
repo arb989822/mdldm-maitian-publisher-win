@@ -7,7 +7,7 @@ const dir = process.argv[2];
 if (!dir) { console.error('用法：node tools/validate.mjs <工程目录>'); process.exit(2); }
 const b = JSON.parse(readFileSync(join(dir, 'publish.json'), 'utf8'));
 const files = new Set();
-const walk = (d) => readdirSync(d).forEach(n => { const p = join(d, n); statSync(p).isDirectory() ? walk(p) : files.add(relative(dir, p)); });
+const walk = (d) => readdirSync(d).forEach(n => { const p = join(d, n); statSync(p).isDirectory() ? walk(p) : files.add(relative(dir, p).replace(/\\/g, '/')); });
 walk(dir);
 const { errors, warnings } = validate(b, files);
 // 成片的 moov 必须在文件头（faststart），否则小红书报「无视频流信息」、抖音不出表单（2026-11-12 第 37 期）
