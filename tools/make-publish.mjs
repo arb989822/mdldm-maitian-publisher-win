@@ -65,7 +65,10 @@ const walk = (d) => readdirSync(d).forEach(n => { const p = join(d, n); statSync
 walk(dir);
 const video = files.includes('成片.mp4') ? '成片.mp4' : null;
 const covers = {};
-for (const [k, n] of [['3x4', 'cover-3x4.png'], ['4x3', 'cover-4x3.png'], ['16x9', 'cover-16x9.jpg']]) if (files.includes(`封面/${n}`)) covers[k] = `封面/${n}`;
+for (const [k, ns] of [['3x4', ['cover-3x4.png', 'cover-3x4.jpg']], ['4x3', ['cover-4x3.png', 'cover-4x3.jpg']], ['9x16', ['cover-9x16.png', 'cover-9x16.jpg']], ['16x9', ['cover-16x9.jpg', 'cover-16x9.png']]]) {
+  const hit = ns.find(n => files.includes(`封面/${n}`));
+  if (hit) covers[k] = `封面/${hit}`;
+}
 const has = (k) => !!covers[k];
 const pick = (...ks) => ks.filter(has);
 

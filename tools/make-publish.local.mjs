@@ -16,7 +16,7 @@ export function extend({ out, sec, field, covers }) {
   const raw = field(s, '正文') || field(s, '描述') || '';
   const b = splitTopics(raw);
   out.platforms.kuaishou = {
-    covers: covers['3x4'] ? ['3x4'] : [],
+    covers: covers['9x16'] ? ['9x16'] : covers['3x4'] ? ['3x4'] : [],
     body: b.body,
     topics: b.topics,
   };
