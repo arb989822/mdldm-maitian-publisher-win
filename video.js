@@ -183,10 +183,12 @@ async function publish() {
   if (!/^(\/|[a-zA-Z]:[\\/]|\\\\)/.test(rootPath)) { alert('请先填 NAS 目录在本机的绝对路径'); return; }
   try { localStorage.setItem(PATH_KEY, rootPath); } catch { /* 无痕模式 */ }
   const win = await chrome.windows.getCurrent();
+  const cleanRoot = rootPath.replace(/[\\/]+$/, '');
+  const dir = (!current.project.dir && root && !cleanRoot.endsWith(root.name)) ? root.name : current.project.dir;
   // 文件夹句柄不能跨进程传，只传相对路径和 publish.json 内容；流程在插件后台跑
   const r = await chrome.runtime.sendMessage({
     type: 'publish:start', rootPath, platforms, windowId: win.id,
-    project: { dir: current.project.dir, data: current.project.data },
+    project: { dir, data: current.project.data },
   });
   if (!r || !r.ok) alert(`没能开始：${r ? r.error : '插件后台没有响应'}`);
 }
