@@ -7,7 +7,7 @@ const splitTopics = (text) => {
       for (const w of l.trim().split(/\s+/)) topics.push(w.slice(1));
     } else rest.push(l);
   }
-  return { body: rest.join('\n').trim(), topics };
+  return { body: rest.join('\n').trim(), topics: [...new Set(topics)] };
 };
 
 export function extend({ out, sec, field, covers }) {
