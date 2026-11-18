@@ -49,9 +49,11 @@ assert.equal(n4.title, '真标题');
 assert.equal(n4.coverRef, 'c.png');
 assert.deepEqual(n4.segments.map(s => s.type), ['html']);
 
-// 真实文章
-const art = readFileSync(process.argv[2], 'utf8');
-const r = parseNote(art);
-console.log('title:', r.title, '| cover:', r.coverRef, '| warnings:', r.warnings);
-r.segments.forEach((s, i) => console.log(i, s.type, s.ref || s.texts.slice(0, 2).map(x => x.t.slice(0, 16)).join(' / ')));
+// 真实文章（可选：传文件路径时才测）
+if (process.argv[2]) {
+  const art = readFileSync(process.argv[2], 'utf8');
+  const r = parseNote(art);
+  console.log('title:', r.title, '| cover:', r.coverRef, '| warnings:', r.warnings);
+  r.segments.forEach((s, i) => console.log(i, s.type, s.ref || s.texts.slice(0, 2).map(x => x.t.slice(0, 16)).join(' / ')));
+}
 console.log('ALL TESTS PASSED');

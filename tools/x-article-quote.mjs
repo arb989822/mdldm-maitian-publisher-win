@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 // 发布中控目录（飞书通知、锁文件），没有就只打日志
 const HUB = process.env.PUBLISH_HUB || join(homedir(), 'publish-hub');
 import { call, evaluate } from './cdp.mjs';
@@ -21,7 +22,7 @@ const DRY = !!args.dry, RESUME = !!args.resume, AT = new Date(args.at || Date.no
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const log = (...a) => console.log(new Date().toLocaleTimeString('zh-CN', { hour12: false }), ...a);
 let notify = async (t) => log('[通知]', t);
-try { notify = (await import(join(HUB, 'src/feishu.mjs'))).notify; } catch {}
+try { notify = (await import(pathToFileURL(join(HUB, 'src/feishu.mjs')).href)).notify; } catch {}
 async function waitFor(T, expr, ms, step = 1000) { const end = Date.now() + ms; while (Date.now() < end) { try { if (await evaluate(T, expr)) return true; } catch {} await sleep(step); } return false; }
 // 真实鼠标点击（X 不一定认 JS 的 el.click()，2026-11-14 第 4 期长文 Publish 就是这样没发出去）
 async function realClick(T, expr) { await clearOverlay(T, expr); const r = await rectOf(T, expr); if (!r) return false; await clickAt(T, r.x, r.y); return true; }

@@ -43,13 +43,20 @@ function field(text, label) {
   const m = text.match(re);
   return m ? clean(m[1]) : null;
 }
-const hashTags = (line) => (line.match(/#[^\s#]+/g) || []).map(t => t.slice(1));
-// 正文最后一行如果全是 #话题，拆出来
+const hashTags = (line) => [...new Set((line.match(/#[^\s#]+/g) || []).map(t => t.slice(1)))];
+// 正文末尾若有一行或多行全是 #话题，统一拆出并去重
 function splitTopics(body) {
   const lines = body.split('\n');
-  const last = lines[lines.length - 1].trim();
-  if (last && last.split(/\s+/).every(w => w.startsWith('#'))) return { body: clean(lines.slice(0, -1).join('\n')), topics: hashTags(last) };
-  return { body, topics: [] };
+  const topics = [];
+  while (lines.length) {
+    const t = lines[lines.length - 1].trim();
+    if (!t) { lines.pop(); continue; }
+    if (t.split(/\s+/).every(w => /^#\S+/.test(w))) {
+      topics.unshift(...hashTags(t));
+      lines.pop();
+    } else break;
+  }
+  return { body: clean(lines.join('\n')), topics: [...new Set(topics)] };
 }
 
 const header = (k) => { const m = md.match(new RegExp(`^> ${k}：\\s*(.+?)\\s*$`, 'm')); return m ? m[1] : null; };
@@ -98,7 +105,7 @@ const out = {
   id: basename(dir),
   ...(episode ? { episode } : {}),
   name: title,
-  source: mdPath.replace(/^.*?\/doc\//, ''),
+  source: mdPath.replace(/\\/g, '/').replace(/^.*?\/doc\//, ''),
   ...(files.includes('发布素材.md') ? { source_backup: '发布素材.md' } : {}),
   video,
   ...(durationSec ? { durationSec } : {}),
@@ -126,7 +133,8 @@ writeFileSync(target, JSON.stringify(out, null, 2) + '\n');
 const { errors, warnings } = validate(out, new Set(files));
 // Instagram 网页上传单个文件最大 1GB（PolarisCreationConstants.MAX_FILE_SIZE）：成片太大要先转一版
 if (out.platforms.instagram && !out.platforms.instagram.video && video && statSync(join(dir, video)).size > 1e9) {
-  warnings.push(`Instagram：成片 ${(statSync(join(dir, video)).size / 1e9).toFixed(2)}GB，超过网页上传 1GB 上限，先转一版放进工程目录（ffmpeg -i 成片.mp4 -r 30 -c:v h264_videotoolbox -b:v 5000k -c:a aac -b:a 128k -movflags +faststart 成片-ig.mp4），重新生成时会自动给 Instagram 用`);
+  const vcodec = process.platform === 'darwin' ? 'h264_videotoolbox' : 'libx264';
+  warnings.push(`Instagram：成片 ${(statSync(join(dir, video)).size / 1e9).toFixed(2)}GB，超过网页上传 1GB 上限，先转一版放进工程目录（ffmpeg -i 成片.mp4 -r 30 -c:v ${vcodec} -b:v 5000k -c:a aac -b:a 128k -movflags +faststart 成片-ig.mp4），重新生成时会自动给 Instagram 用`);
 }
 console.log(`已写入 ${target}`);
 console.log(`平台：${Object.keys(platforms).join('、')}；封面：${Object.keys(covers).join(' / ')}；定时：${schedule || '无'}`);

@@ -2,8 +2,10 @@
 //   node tools/cdp.mjs '{"op":"tabs"}'
 //   node tools/cdp.mjs '{"op":"cdp","tabId":1,"method":"Runtime.evaluate","params":{"expression":"document.title","returnByValue":true}}'
 // 也可以 import { call, evaluate } 在脚本里用。
+import { pathToFileURL } from 'node:url';
+
 export async function call(cmd) {
-  const r = await fetch('http://127.0.0.1:8765/cmd', { method: 'POST', body: JSON.stringify(cmd) });
+  const r = await fetch('http://127.0.0.1:8765/cmd', { method: 'POST', headers: { 'content-type': 'application/json', 'x-maitian-bridge': '1' }, body: JSON.stringify(cmd) });
   const j = await r.json();
   if (!j.ok) throw new Error(j.error);
   return j.result;
@@ -17,6 +19,6 @@ export async function evaluate(tabId, expression, timeout) {
   return r.result.value;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   console.log(JSON.stringify(await call(JSON.parse(process.argv[2])), null, 1));
 }

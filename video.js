@@ -5,7 +5,7 @@ import { PLATFORMS } from './lib/bundle.js';
 
 const $ = (id) => document.getElementById(id);
 const KEY = 'nasRoot', PATH_KEY = 'nasPath';
-const DEFAULT_PATH = '/Volumes/sata11-176XXXX6901/视频导出';
+const DEFAULT_PATH = '';
 
 let root = null;        // NAS 目录句柄
 let projects = [];
@@ -184,7 +184,8 @@ async function publish() {
   try { localStorage.setItem(PATH_KEY, rootPath); } catch { /* 无痕模式 */ }
   const win = await chrome.windows.getCurrent();
   const cleanRoot = rootPath.replace(/[\\/]+$/, '');
-  const dir = (!current.project.dir && root && !cleanRoot.endsWith(root.name)) ? root.name : current.project.dir;
+  const rootTail = cleanRoot.split(/[\\/]/).pop() || '';
+  const dir = (!current.project.dir && root && rootTail.toLowerCase() !== root.name.toLowerCase()) ? root.name : current.project.dir;
   // 文件夹句柄不能跨进程传，只传相对路径和 publish.json 内容；流程在插件后台跑
   const r = await chrome.runtime.sendMessage({
     type: 'publish:start', rootPath, platforms, windowId: win.id,
