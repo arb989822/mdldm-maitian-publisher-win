@@ -63,19 +63,35 @@ function findFullCopyFile(label, txt) {
 
 const parseFull = (txt) => {
   const getSec = (name) => {
-    const re = new RegExp(`【${name}】\\r?\\n([\\s\\S]*?)(?=\\r?\\n={10,}|$)`);
+    const re = new RegExp(`【${name}】[^\\r\\n]*\\r?\\n(?:={10,}\\r?\\n)?([\\s\\S]*?)(?=\\r?\\n={10,}|$)`);
     const m = txt.match(re);
-    return m ? m[1] : '';
+    return m ? m[1].trim() : '';
   };
+  const stripTags = (s) => s.replace(/\r?\n\s*#\S+[^\r\n]*/g, '').trim();
   const dy = getSec('抖音');
   const sph = getSec('视频号');
-  const titleM = dy.match(/作品标题[^：]*：\s*\r?\n?([^\r\n]+)/);
-  const title = titleM ? titleM[1].trim() : '';
-  const descM = sph.match(/描述：\s*\r?\n([\s\S]*?)(?=\r?\n话题：|\r?\n$)/);
-  const desc = descM ? descM[1].replace(/\r?\n\s*#\S+[^\r\n]*/g, '').trim() : '';
-  const topicM = (sph + '\n' + dy).match(/(#[^\r\n]+)/);
+  const ks = getSec('快手');
+  const xhs = getSec('小红书');
+
+  const dyTitleM = dy.match(/作品标题[^：]*：\s*\r?\n?([^\r\n]+)/);
+  const title = dyTitleM ? dyTitleM[1].trim() : '';
+  const dyDescM = dy.match(/作品描述：\s*\r?\n?([\s\S]*?)(?=\r?\n备选标题：|$)/);
+  const dyDesc = dyDescM ? stripTags(dyDescM[1]) : '';
+
+  const sphDescM = sph.match(/描述：\s*\r?\n([\s\S]*?)(?=\r?\n话题：|$)/);
+  const desc = sphDescM ? stripTags(sphDescM[1]) : dyDesc;
+
+  const ksDescM = ks.match(/作品描述：\s*\r?\n([\s\S]*?)$/);
+  const ksDesc = ksDescM ? stripTags(ksDescM[1]) : `${title}\n${desc}`;
+
+  const xhsTitleM = xhs.match(/标题[^：]*：\s*\r?\n?([^\r\n]+)/);
+  const xhsTitle = xhsTitleM ? xhsTitleM[1].trim() : '';
+  const xhsDescM = xhs.match(/正文：\s*\r?\n([\s\S]*?)$/);
+  const xhsDesc = xhsDescM ? stripTags(xhsDescM[1]).replace(/^原创角色《红围巾光痕》\r?\n?/, '').trim() : desc;
+
+  const topicM = (sph + '\n' + dy + '\n' + xhs).match(/(#[^\r\n]+)/);
   const topics = topicM ? topicM[1].trim() : '#红围巾光痕 #原创动画 #自我成长 #人生感悟';
-  return { title, desc, topics };
+  return { title, desc, dyDesc: dyDesc || desc, ksDesc, xhsTitle, xhsDesc, topics };
 };
 
 let okCount = 0;
@@ -110,7 +126,7 @@ for (const base of items) {
   // 3. 解析 .txt 文案并生成 发布素材.md
   const txtPath = path.join(SRC, `${base}.txt`);
   const txt = fs.existsSync(txtPath) ? fs.readFileSync(txtPath, 'utf8') : '';
-  let title = '', shortTitle = '', desc = '', topics = '';
+  let title = '', shortTitle = '', desc = '', dyBody = '', xhsTitleCustom = '', xhsBody = '', ksBody = '', topics = '';
 
   const stM = txt.match(/视频号短标题[^：]*：\s*([^\r\n]+)/);
   if (stM) shortTitle = stM[1].trim();
@@ -120,6 +136,10 @@ for (const base of items) {
     const fc = parseFull(fs.readFileSync(fullCopyPath, 'utf8'));
     title = fc.title || shortTitle || label;
     desc = fc.desc;
+    dyBody = fc.dyDesc;
+    xhsTitleCustom = fc.xhsTitle;
+    xhsBody = fc.xhsDesc;
+    ksBody = fc.ksDesc;
     topics = fc.topics;
   } else {
     const tM = txt.match(/^标题：\s*([^\r\n]+)/m);
@@ -134,11 +154,13 @@ for (const base of items) {
   if ([...shortTitle].length > 16) shortTitle = trunc(shortTitle, 16);
   if ([...shortTitle].length < 6) shortTitle = shortTitle.padEnd(6, ' ');
 
-  const xhsTitle = trunc(title, 20);
+  const sanitize = (s) => s.replace(/完整版\s*见主页/g, '完整版在合集').replace(/见主页/g, '关注看更多');
+  const xhsTitle = trunc(xhsTitleCustom || title, 20);
   const dyTitle = trunc(title, 30);
-  const safeDesc = desc
-    .replace(/完整版\s*见主页/g, '完整版在合集')
-    .replace(/见主页/g, '关注看更多');
+  const safeDesc = sanitize(desc);
+  const safeXhs = sanitize(xhsBody || desc);
+  const safeDy = sanitize(dyBody || desc);
+  const safeKs = ksBody || `${title}\n${desc}`;
 
   const md = `# 红围巾光痕 · ${label}
 
@@ -151,14 +173,14 @@ for (const base of items) {
 ${xhsTitle}
 **正文：**
 原创角色《红围巾光痕》
-${safeDesc}
+${safeXhs}
 ${topics}
 
 ## 五、抖音
 **标题：**
 ${dyTitle}
 **正文：**
-${safeDesc}
+${safeDy}
 ${topics}
 
 ## 六、视频号
@@ -170,8 +192,7 @@ ${topics}
 
 ## 快手
 **正文：**
-${title}
-${desc}
+${safeKs}
 ${topics}
 `;
 
