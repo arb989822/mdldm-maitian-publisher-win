@@ -67,7 +67,7 @@ const parseFull = (txt) => {
     const m = txt.match(re);
     return m ? m[1].trim() : '';
   };
-  const stripTags = (s) => s.replace(/\r?\n\s*#\S+[^\r\n]*/g, '').trim();
+  const stripTags = (s) => s.replace(/\s*#[^\s#]+/g, '').trim();
   const dy = getSec('抖音');
   const sph = getSec('视频号');
   const ks = getSec('快手');
@@ -144,8 +144,8 @@ for (const base of items) {
   } else {
     const tM = txt.match(/^标题：\s*([^\r\n]+)/m);
     title = tM ? tM[1].trim() : label;
-    const dM = txt.match(/^描述：\s*\r?\n([\s\S]*?)(?=\r?\n(?:抖音版|话题|置顶评论|——)|$)/m);
-    desc = dM ? dM[1].replace(/\r?\n\s*#\S+[^\r\n]*/g, '').trim() : title;
+    const dM = txt.match(/^描述：\s*\r?\n([\s\S]*?)(?=\r?\n(?:抖音版|话题|置顶评论|——))/m);
+    desc = dM ? stripTags(dM[1]) : title;
     const tpM = txt.match(/^话题：\s*([^\r\n]+)/m);
     topics = tpM ? tpM[1].trim() : '#红围巾光痕 #原创动画 #自我成长 #人生感悟';
   }
