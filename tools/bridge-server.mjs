@@ -43,8 +43,8 @@ http.createServer(async (req, res) => {
 
   // 仅允许来自 Chrome 扩展的 /poll、/result（含预检）；彻底禁止普通网页跨站访问
   if (url.pathname === '/poll' || url.pathname === '/result') {
-    if (!isExtOrigin(origin)) return send(res, 403, { ok: false, error: 'forbidden origin' });
-    const cors = { 'access-control-allow-origin': origin, 'vary': 'Origin' };
+    if (origin && !isExtOrigin(origin)) return send(res, 403, { ok: false, error: 'forbidden origin' });
+    const cors = origin ? { 'access-control-allow-origin': origin, 'vary': 'Origin' } : {};
     if (req.method === 'OPTIONS') {
       res.writeHead(204, { ...cors, 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type, x-maitian-bridge' });
       return res.end();
