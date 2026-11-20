@@ -1,212 +1,159 @@
-<div align="center">
+# 麦田发布助手（Windows 专用适配版 · Chrome 插件）
 
-<img src="docs/readme/banner.png" alt="麦田发布助手 · 一期视频一键填好六个平台，只填写不发布" />
+> **致 AI Agent（Antigravity / Claude Code / Codex / Cursor）与使用者**：
+> 本仓库是 **Windows 10/11 专用修改版**（基于原版 macOS 项目深度适配并新增 **快手** 平台与最优封面策略）。
+> - **插件仓库（本仓库）**：`https://github.com/arb989822/mdldm-maitian-publisher-win`
+> - **配套麦田中控仓库（Windows 版）**：`https://github.com/arb989822/mdldm-maitian-win`
+> - ⚠️ **切勿克隆原版 `CzzzzzzJ` 仓库或使用原版 `driver: "direct"` / `/Volumes/...` 配置**，否则在 Windows 下会出现路径报错、缺少快手、封面比例错位等问题。
 
-# 麦田发布助手
-
-**麦田工作台的发布引擎：一期视频，一键填好 B 站、小红书、抖音、视频号、YouTube、X、Instagram 七个平台；Obsidian 笔记，一键写进 X 长文。**
-
-只负责填写，最后的「发布」由你自己点。可以单独用，也可以交给 [麦田](https://github.com/CzzzzzzJ/mdldm-maitian) 定时调度、发完自动取链接、每天采数据。
-
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Manifest%20V3-2f6bff.svg)](manifest.json)
-[![Version](https://img.shields.io/badge/version-0.3.1-ffd43b.svg)](manifest.json)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/CzzzzzzJ/mdldm-maitian-publisher?style=social)](https://github.com/CzzzzzzJ/mdldm-maitian-publisher/stargazers)
-
-[安装](#安装) · [和麦田一起用](#和麦田一起用) · [视频多平台分发](#视频多平台分发) · [X 长文](#x-长文使用) · [原理](#原理和踩过的坑)
-
-[麦田工作台](https://github.com/CzzzzzzJ/mdldm-maitian) · [X / Twitter](https://x.com/czzzzzzJ_) · [联系作者](#联系作者)
-
-</div>
-
-> [!TIP]
-> **想系统学会用 AI 做这类小工具？** 这个插件是我用 Claude Code 做出来的。从 0 基础到用 AI 做出自己的产品，完整课程和每周直播都在 👉 **[麦当的知识站 mdldm.club](https://www.mdldm.club/ai-course-promotion?utm_source=github&utm_medium=readme&utm_campaign=publisher)**
-
-<p align="center"><img src="https://github.com/CzzzzzzJ/mdldm-maitian/releases/download/media/maitian-publish.gif" alt="一期视频的完整发布流程：Agent 写文案 → 麦田排期 → 插件分批填写各平台 → 国内平台你来点发布" /></p>
-<p align="center"><sub>和麦田一起用的完整流程（各平台页面为示意，<a href="https://github.com/CzzzzzzJ/mdldm-maitian/releases/download/media/maitian-publish.mp4">高清 MP4</a>）</sub></p>
-
-<details>
-<summary>只看插件面板的操作演示</summary>
-
-<p align="center"><img src="https://github.com/CzzzzzzJ/mdldm-maitian-publisher/releases/download/media/publish-demo.gif" alt="视频分发流程演示：打开插件、选 NAS 发布目录、校验、一键填写六个平台" /></p>
-<p align="center"><sub>视频分发流程演示（示意界面，<a href="https://github.com/CzzzzzzJ/mdldm-maitian-publisher/releases/download/media/publish-demo.mp4">高清 MP4</a>）</sub></p>
-
-</details>
-
-## 它能做什么
-
-### 视频多平台分发（v0.2 新增）
-
-| 能力 | 说明 |
-| --- | --- |
-| 一个工程文件 | 每期视频一个目录：成片、封面、`publish.json`（各平台标题、正文、标签、用哪张封面） |
-| 七个平台一键填写 | 自动打开 B 站、小红书、抖音、视频号、YouTube、X、Instagram 的上传页，传视频、传封面、填标题正文、选话题 |
-| 大文件直传 | 视频通过 Chrome 调试接口直接交本地路径，1.5GB 的成片也不卡 |
-| 发前校验 | 字数上限、必带标签、小红书/抖音/视频号不放链接和微信号，有问题先拦下 |
-| 等上传完再补封面 | 小红书、视频号要等视频传完才能改封面，插件在后台等着，传完自动补上 |
-| 定时发布 | `publish.json` 写上时间，七个平台的定时都会设好（B 站、小红书、抖音、视频号、YouTube、X、Instagram） |
-| 不打扰 | 上传页在后台打开，填写时不抢你正在看的页面；关掉面板也继续跑，工具栏图标显示进度，结束弹通知 |
-| 安全 | 只填写，**不会点发布**；每个平台一张状态卡，跳过了什么、哪里异常都写清楚 |
-
-### X 长文
-
-| 能力 | 说明 |
-| --- | --- |
-| 直连本地 Obsidian | 选一次库文件夹，之后直接读取笔记和图片，不需要装 Obsidian 插件 |
-| 按顺序插入 | 标题、封面、段落、小标题、引用、列表、链接、图片，和笔记里的顺序一致 |
-| 自动处理图片 | 支持 `![[图片]]` 和 `![](图片)`，大图自动压缩，每张图等上传稳定后再继续 |
-| 逐段核对 | 插完自动对照原文，漏掉的段落补回原位 |
-| 安全 | 只写草稿，**不会点发布**；插入中途切换标签页也不影响 |
-
-<p align="center"><img src="docs/assets/panel.png" width="380" alt="Obsidian → X 长文 插件侧边栏：选择笔记、预览结构、一键插入" /></p>
-
-## 安装
-
-1. 下载本仓库：`git clone https://github.com/CzzzzzzJ/mdldm-maitian-publisher.git`，或点右上角 **Code → Download ZIP** 后解压
-2. Chrome 打开 `chrome://extensions`，打开右上角「开发者模式」
-3. 点「加载已解压的扩展程序」，选择仓库文件夹
-4. 点工具栏的拼图图标，把「麦田发布助手」固定出来
-
-## 和麦田一起用
-
-[麦田](https://github.com/CzzzzzzJ/mdldm-maitian) 是一套给多平台博主的开源工作台：分发和定时、各平台数据留存和大屏、接入你自己的站点看转化。三者分工：
-
-| 部分 | 做什么 |
-| --- | --- |
-| 发布 skill（在麦田仓库 `skills/`） | 让 AI 助手看片、写各平台文案、生成 `publish.json` 并校验 |
-| **麦田发布助手（本仓库）** | 各平台适配器：打开上传页、传视频和封面、填文案、设定时 |
-| 麦田 | 什么时候跑、跑到哪、防重、到点取链接、每天采数据、飞书通知 |
-
-麦田直接加载本仓库的 `lib/`（在 `config.json` 的 `pluginDir` 填本仓库路径），所以平台改版只需要更新这一个仓库。单独用插件时，按下面「视频多平台分发」在侧边栏里操作即可。
-
-## 视频多平台分发
-
-1. 每期视频准备一个工程目录（建议放在 NAS 或固定的「视频导出」文件夹下）：
-
-   ```
-   视频导出/系列名/第几期/
-     成片.mp4
-     封面/cover-3x4.png   竖：小红书、抖音竖封面、视频号个人主页卡片
-     封面/cover-4x3.png   横：B 站、抖音横封面、视频号分享卡片
-     封面/cover-16x9.jpg  YouTube 缩略图、Instagram 封面
-     publish.json
-   ```
-
-   `publish.json` 的格式见 [docs/multi-platform-design.md](docs/multi-platform-design.md)。也可以从发布素材 md 直接生成：`node tools/make-publish.mjs <发布素材.md> <工程目录>`（会顺带校验）
-2. 先在 Chrome 里登录好各个平台的创作者后台
-3. 打开插件面板，切到「视频分发」，点「选择」选中「视频导出」文件夹，并填好它在本机的绝对路径
-4. 点一期工程，看校验结果，勾选要发的平台，点「一键填写所选平台」
-5. 插件在后台依次打开各平台上传页并填写，你可以关掉面板去做别的。工具栏图标会显示进度，结束时弹通知
-6. 全部变成「待你发布」后，逐个标签页检查、补上必填的声明项，自己点发布（设了定时就点「定时发布」）
-
-<p align="center"><img src="docs/readme/panel-video.png" width="380" alt="视频分发面板：选发布工程、校验、勾选平台、一键填写" /></p>
-
-> 浏览器顶部会出现「正在调试此浏览器」的提示条，这是插件用 Chrome 调试接口上传本地视频，填写结束后会自动断开。
-> 各平台上传页的结构和实测细节见 [docs/platform-notes.md](docs/platform-notes.md)。
-
-## X 长文使用
-
-<p align="center"><img src="https://github.com/CzzzzzzJ/mdldm-maitian-publisher/releases/download/media/demo.gif" width="720" alt="X 长文流程演示：点插件图标、选 Obsidian 笔记、一键插入 X 长文草稿" /></p>
-
-1. 在 X 上新建一篇长文，停在编辑页（`x.com/compose/articles/edit/...`）
-2. 点工具栏的插件图标，右侧打开面板，切到「X 长文」
-3. 第一次使用：点「选择」，选中你的 Obsidian 库文件夹。之后每次打开面板，最多点一下「授权」
-4. 在列表里点选笔记（按最近修改排序，可搜索），确认预览里的结构和图片
-5. 点「插入到当前长文草稿」，等进度跑完，检查后自己发布
-
-> X 长文（Articles）需要开通 X 的付费订阅才能使用。
-
-## 笔记写法
-
-照平时的 Obsidian 写法就行：
-
-| Obsidian 里 | X 长文里 |
-| --- | --- |
-| frontmatter `title:`，或第一个 `# H1` | 标题 |
-| frontmatter `cover:`，或 H1 后、正文前的第一张图 | 封面（建议 5:2） |
-| H1 之前的内容 | 忽略，适合写备注、发布清单 |
-| `##` / `###` | 小标题 |
-| 每一行文字 | 一个段落 |
-| `**加粗**` `==高亮==` `*斜体*` `~~删除线~~` `[文字](链接)` | 对应格式（高亮转成加粗） |
-| `> 引用`、`> [!tip] callout` | 引用块 |
-| `- 列表`、`1. 列表` | 无序 / 有序列表 |
-| `![[图片.png]]`、`![](图片.png)` | 图片，按出现顺序插入 |
-| `![[视频.mp4]]` | 一行加粗占位文字，视频需在编辑器里手动上传 |
-| `---` 分割线、`%%注释%%` | 忽略 |
-
-图片按「笔记所在目录 → 库根目录 → 全库同名文件」的顺序查找。超过 4MB 或不是 PNG/JPEG/WebP 的图会自动压成 JPEG。
-
-<details>
-<summary>示例笔记</summary>
-
-```markdown
 ---
-tags: [X长文]
+
+## 一、Windows 版核心改动（相比原版）
+
+1. **Windows 路径与盘符全面适配**：
+   - `video.js`：支持 Windows 盘符路径（`C:\...`、`Y:\...`、`\\NAS\...`），且无论「选择」点的是父目录还是单期子目录，均自动对齐层级、去重重叠目录名。
+   - `lib/publish.js`：`abs()` 按 Windows 反斜杠 `\` 规范拼接文件路径；登录预检改为前台激活标签页（`active: true`）+ `120s` 超时，彻底解决 Chrome 后台标签页节流导致抖音超时的问题。
+   - `tools/make-publish.mjs`、`tools/validate.mjs`：Windows 反斜杠路径统一归一化为 `/`，动态 `import()` 改用 `pathToFileURL`，修复 Windows 下识别不到封面和扩展钩子的问题。
+2. **新增「快手（`kuaishou`）」全自动填写适配器**：
+   - 新增 `lib/platforms/kuaishou.js`、`lib/platforms/extra.js`、`lib/platforms/extra-specs.js`、`tools/make-publish.local.mjs`。
+   - 支持快手视频上传、描述+话题自动输入（支持第一行提问标题）、定时发布、以及 **`9:16` 竖版封面**自动打开「封面设置 → 上传封面 → 确认」。
+3. **各平台最优封面自动选择与防错位**：
+   - **小红书（`xhs`）**：自动选 **`3:4`**（`cover-3x4.png` / `.jpg`），自动裁剪 `3:4` 并校验评估通过。
+   - **抖音（`douyin`）**：自动双配 **`4:3`（横封面）+ `3:4`（竖封面）**；修复了竖屏视频默认停在「竖封面」页签导致 `4:3` 覆盖 `3:4`、缺失横封面的 Bug（现显式先切 `设置横封面` 传 `4:3`，再切 `设置竖封面` 传 `3:4`）。
+   - **视频号（`channels`）**：自动双配 **`3:4`（个人主页卡片）+ `4:3`（分享卡片）**，`3:4` 不重复上传，`4:3` 找不到编辑按钮时温和提示不标红异常；修复了微信 `weui-desktop-picker` 时间面板未展开导致定时停在默认 `04:00` 的 Bug（现通过 `focus() + click()` + `scrollIntoView()` 精准点选时、分）。
+   - **快手（`kuaishou`）**：优先自动选 **`9:16`**（`cover-9x16.jpg` / `.png`），无 `9:16` 时自动回退 `3:4`。
+4. **安全加固**：
+   - `tools/bridge-server.mjs` 增加 `/cmd` 仅允许插件后台调用的校验，阻断网页跨站调用。
+
 ---
-> 发布前：补充回放链接（这行在 H1 之前，不会被插入）
 
-# 一个人做 AI 知识站 10 个月复盘
-![[01-封面.png]]
+## 二、AI Agent 一键安装与配置流程（Windows 10/11）
 
-前几天，我受邀参加了一场 Space。
+### 第 1 步：前置环境检查
+确保本机已安装：
+- **Node.js `>= 22.5`**（必须，用到内置 `node:sqlite`）
+- **Git**、**Google Chrome**
+- **ffmpeg**（用于给视频做 `-movflags +faststart`，否则小红书会报「检测到视频文件无视频流信息」）
 
-## 先交代基本盘
-![[02-基本盘数据.png]]
-- 知识站上线 **10 个月**
-- 唯一 SKU：**500 元/年**
+### 第 2 步：克隆两个 Windows 专用仓库到 `%USERPROFILE%\maitian`
+**注意：文件夹名保持 `mdldm-maitian` 和 `mdldm-maitian-publisher`，但克隆源必须是 `arb989822` 的 `-win` 仓库！**
 
-> 用户订阅的是你这个人，而不是某一节课。
+```powershell
+$dir = "$env:USERPROFILE\maitian"
+New-Item -ItemType Directory -Force -Path $dir | Out-Null
+Set-Location $dir
+git clone https://github.com/arb989822/mdldm-maitian-win.git mdldm-maitian
+git clone https://github.com/arb989822/mdldm-maitian-publisher-win.git mdldm-maitian-publisher
 ```
 
-</details>
+### 第 3 步：在 Chrome 加载本插件
+1. 打开 Chrome 地址栏输入 `chrome://extensions`
+2. 打开右上角 **「开发者模式」** → 点击左上角 **「加载已解压的扩展程序」**
+3. 选择目录：`C:\Users\<你的用户名>\maitian\mdldm-maitian-publisher`
+4. 复制扩展卡片上的 **32 位扩展 ID**（例如 `kabokggfkpikbgikhclnhofllleeboce`）
 
-## 原理和踩过的坑
+### 第 4 步：初始化麦田中控配置（`config.json`）
+在 `C:\Users\<你的用户名>\maitian\mdldm-maitian` 下运行初始化脚本：
 
-X 长文编辑器基于 Draft.js。插件用 `chrome.scripting.executeScript({ world: 'MAIN' })` 在页面里运行 [`lib/engine.js`](lib/engine.js)，通过 React fiber 拿到 `editorState`，再用模拟粘贴写入内容。
+```powershell
+cd "$env:USERPROFILE\maitian\mdldm-maitian"
+powershell -ExecutionPolicy Bypass -File scripts/install-win.ps1
+```
 
-- **光标**：DOM selection 对 Draft 不可靠，每次写入前都用 `forceSelection` 把光标放到文末
-- **格式丢失**：粘贴片段的第一块会并入光标所在块，并继承它的格式（小标题会变成普通段落）。所以每段前面垫一个零宽占位段落，写完再统一清理
-- **图片被冲掉**：图片刚上传完立刻写文字，图片会消失。所以每张图之后等待几秒（面板里可调，默认 12 秒）
-- **封面**：页面上的 `input[data-testid=fileInput]` 是封面上传入口，不是正文插图
-- **漏段**：插完按顺序核对每段文字，缺了就在原位补回（补回的段落不带加粗和链接）
+然后打开生成的 `config.json`，确认以下关键字段（**注意必须用 `"driver": "plugin"`**）：
+```json
+{
+  "name": "麦田",
+  "pluginDir": "C:\\Users\\<你的用户名>\\maitian\\mdldm-maitian-publisher",
+  "extensionId": "<第3步复制的32位Chrome扩展ID>",
+  "bridge": "http://127.0.0.1:8765",
+  "driver": "plugin",
+  "chromePort": 9333,
+  "chromeProfile": "C:\\Users\\<你的用户名>\\maitian\\mdldm-maitian\\chrome-profile",
+  "rootPath": "<你的发布工程根目录，如 Y:\\AI励志\\最终定稿\\麦田工程>",
+  "batches": [["bilibili", "douyin"], ["xhs", "channels", "kuaishou"], ["youtube"], ["instagram"]],
+  "auto": ["zsz", "youtube", "instagram"],
+  "manual": ["bilibili", "douyin", "xhs", "channels", "kuaishou"],
+  "keepAlive": ["channels"],
+  "keepAliveMinutes": 60,
+  "sampleHours": 6,
+  "web": { "port": 8787, "key": "<自动生成的随机口令>" }
+}
+```
 
-> 这是非官方工具，依赖 X 编辑器的页面结构。X 改版后可能失效，欢迎提 Issue。
+---
 
-### 视频分发的做法
+## 三、发布工程打包标准（Agent 打包规范）
 
-各平台上传页都用 `chrome.debugger`（Chrome DevTools Protocol）操作：[`lib/cdp.js`](lib/cdp.js) 用 `DOM.setFileInputFiles` 把本地绝对路径交给上传框（能穿透 Shadow DOM，大视频不经过 JS 内存），用 `Input.insertText` 和真实按键输入文字，需要悬停才出现的按钮用真实鼠标事件。每个平台一个适配器，放在 [`lib/platforms/`](lib/platforms/)，平台改版只需要修对应的文件。
+每个发布工程放在 `<rootPath>\<期数目录>\` 下，结构如下：
 
-### 文件
+```text
+<rootPath>\<期数目录>\
+  成片.mp4                 ← 必须经过 ffmpeg -c copy -movflags +faststart 处理！
+  发布素材.md              ← 四平台文案源文件
+  publish.json             ← 由 make-publish.mjs 自动生成
+  封面\
+    cover-3x4.png (或 .jpg)   ← 小红书、抖音竖封面、视频号主页卡使用
+    cover-4x3.png (或 .jpg)   ← 抖音横封面、视频号分享卡、B站使用
+    cover-9x16.jpg (或 .png)  ← 快手优先使用（无则自动回退 3x4）
+```
 
-- `sidepanel.*`：面板界面；`video.js`：视频分发页签
-- `lib/publish.js`：扫描工程、按平台调度、等上传完成
-- `lib/bundle.js`：`publish.json` 校验规则（`tools/validate.mjs` 是命令行版）
-- `lib/platforms/*.js`：B 站、小红书、抖音、视频号、YouTube、X、Instagram 的适配器
-- `lib/cdp.js`：Chrome 调试接口驱动
-- `lib/devbridge.js`、`tools/`：开发用的本机桥接，只在「加载已解压的扩展程序」时启用
-- `tools/try-adapter.mjs`：在命令行里对真实上传页跑一个适配器的填写（`node --import ./tools/adapter-loader.mjs tools/try-adapter.mjs <平台> <工程目录>`；设 `CDP_PORT` 可直连带调试端口的 Chrome）
-- `lib/md.js`：Obsidian Markdown → 片段（测试：`node tests/md.test.mjs <笔记路径>`）
-- `lib/engine.js`：在编辑页里执行的插入引擎
-- `lib/vault.js`：读取本地库（File System Access API，授权句柄存在 IndexedDB）
+### `发布素材.md` 模板（含快手）
+```markdown
+# 系列名 · 第 N 期｜本期标题
 
-## 联系作者
+> 序号：1118
+> 定时发布：2026-11-18 21:05
+> 成品视频：成片.mp4
 
-<p align="center"><a href="https://www.mdldm.club/ai-course-promotion?utm_source=github&utm_medium=readme&utm_campaign=publisher"><img src="docs/readme/author.png" alt="麦当 mdldm · 0 基础 AI Agent 教学博主 · mdldm.club 知识站" /></a></p>
+## 四、小红书
+**标题：**
+20字以内标题
+**正文：**
+正文内容（不放引流链接）
+#账号标签 #话题2 #话题3 #话题4
 
-本项目由 **麦当mdldm** 开发，是我「一人公司」内容工作流里的一环。
+## 五、抖音
+**标题：**
+30字以内标题
+**正文：**
+正文内容
+#账号标签 #话题2 #话题3 #话题4
 
-- **想学会用 AI 做出自己的工具和产品**：访问 👉 [**麦当的知识站 mdldm.club**](https://www.mdldm.club/ai-course-promotion?utm_source=github&utm_medium=readme&utm_campaign=publisher)。0 基础 AI Agent / Vibe Coding 系列课、每周会员直播、答疑群都在这里
-- **想搭一个自己的知识付费站**：看我开源的 [mdldm Knowledge Kit](https://github.com/CzzzzzzJ/mdldm-knowledge-kit)
-- **Bug 和功能建议**：提 [GitHub Issue](https://github.com/CzzzzzzJ/mdldm-maitian-publisher/issues)
-- **课程合作、品牌合作、企业 AI 培训**：通过 [X / Twitter](https://x.com/czzzzzzJ_) 或 [个人联系页](https://www.mdldm.club/about) 联系，或在 B 站、小红书、抖音搜索 **麦当mdldm**
+## 六、视频号
+**短标题：**
+6到16字无逗号短标题
+**描述：**
+描述内容
+#账号标签 #话题2 #话题3 #话题4
 
-| 个人微信 |
-| --- |
-| <img src="docs/assets/wechat-personal.jpg" width="280" alt="麦当mdldm 个人微信二维码" /> |
-| 扫码添加，备注 `X长文插件` |
+## 快手
+**正文：**
+第一行放提问标题
+正文描述内容
+#账号标签 #话题2 #话题3 #话题4
+```
 
-如果这个插件帮你省了时间，欢迎点个 ⭐ Star，也欢迎在 X 上 [@czzzzzzJ_](https://x.com/czzzzzzJ_) 告诉我你用它发了什么。
+### 生成与校验命令
+```powershell
+cd "$env:USERPROFILE\maitian\mdldm-maitian-publisher"
+node tools/make-publish.mjs "<工程目录>\发布素材.md" "<工程目录>" --require <账号标签>
+node tools/validate.mjs "<工程目录>"
+```
 
-## License
+---
 
-[Apache License 2.0](LICENSE)。Apache-2.0 不授予 `mdldm`、麦当名称或 Logo 的商标权。
+## 四、两种运行分发的方式
+
+### 方式 A：直接在 Chrome「麦田发布助手」侧边栏点（推荐日常手动）
+1. 点开 Chrome 右侧「麦田发布助手」侧边栏；
+2. 顶部「NAS 发布目录」点 **「选择」** 选中你的工程根目录（如 `麦田工程`），下方 **「本机路径」** 填入该目录的完整 Windows 路径（如 `Y:\AI励志\最终定稿\麦田工程`）；
+3. 点选工程 → 确认显示 `✅ 校验通过` → 勾选要发的平台（小红书 / 抖音 / 视频号 / 快手）→ 点 **「一键填写所选平台」**；
+4. 待状态变为绿色 **`待你发布`** 后，点「切到页面」人工核对 AI 声明与定时时间，手动点「定时发布」。
+
+### 方式 B：通过麦田命令行 `hub.mjs` 调度
+```powershell
+cd "$env:USERPROFILE\maitian\mdldm-maitian"
+node src/hub.mjs plan "<工程目录>"
+node src/hub.mjs run "<工程目录>" --only douyin,xhs,channels,kuaishou
+```
