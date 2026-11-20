@@ -46,11 +46,20 @@ const items = fs.readdirSync(SRC)
 const trunc = (s, max) => [...s].slice(0, max).join('');
 const cleanShort = (s) => s.replace(/[，「」『』]/g, ' ').replace(/\s+/g, ' ').trim();
 
-const fullCopyMap = {
-  '第四章正片-自我超越': 'Y:\\AI励志\\最终定稿\\第四章-自我超越\\发布文案.txt',
-  '第五章正片-挣脱': 'Y:\\AI励志\\最终定稿\\第五章-挣脱\\发布文案.txt',
-  '第六章正片-清醒': 'Y:\\AI励志\\最终定稿\\第六章-清醒\\发布文案.txt',
-};
+// 动态匹配「第N章正片-XX」对应的 最终定稿\第N章-XX\发布文案.txt（兼容任意新章节）
+function findFullCopyFile(label, txt) {
+  const refM = txt.match(/最终定稿[\\/]([^\\\r\n]+?[\\/]发布文案\.txt)/);
+  if (refM) {
+    const p = path.join('Y:\\AI励志\\最终定稿', refM[1]);
+    if (fs.existsSync(p)) return p;
+  }
+  const m = label.match(/^(第[^-]+章)正片-(.+)$/);
+  if (m) {
+    const p = path.join('Y:\\AI励志\\最终定稿', `${m[1]}-${m[2]}`, '发布文案.txt');
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
 
 const parseFull = (txt) => {
   const getSec = (name) => {
@@ -106,9 +115,9 @@ for (const base of items) {
   const stM = txt.match(/视频号短标题[^：]*：\s*([^\r\n]+)/);
   if (stM) shortTitle = stM[1].trim();
 
-  const fullKey = Object.keys(fullCopyMap).find(k => label.includes(k));
-  if (fullKey && fs.existsSync(fullCopyMap[fullKey])) {
-    const fc = parseFull(fs.readFileSync(fullCopyMap[fullKey], 'utf8'));
+  const fullCopyPath = findFullCopyFile(label, txt);
+  if (fullCopyPath) {
+    const fc = parseFull(fs.readFileSync(fullCopyPath, 'utf8'));
     title = fc.title || shortTitle || label;
     desc = fc.desc;
     topics = fc.topics;
