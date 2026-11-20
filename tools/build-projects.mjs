@@ -45,6 +45,7 @@ const items = fs.readdirSync(SRC)
 
 const trunc = (s, max) => [...s].slice(0, max).join('');
 const cleanShort = (s) => s.replace(/[，「」『』]/g, ' ').replace(/\s+/g, ' ').trim();
+const stripTags = (s) => s.replace(/\s*#[^\s#]+/g, '').trim();
 
 // 动态匹配「第N章正片-XX」对应的 最终定稿\第N章-XX\发布文案.txt（兼容任意新章节）
 function findFullCopyFile(label, txt) {
@@ -67,7 +68,6 @@ const parseFull = (txt) => {
     const m = txt.match(re);
     return m ? m[1].trim() : '';
   };
-  const stripTags = (s) => s.replace(/\s*#[^\s#]+/g, '').trim();
   const dy = getSec('抖音');
   const sph = getSec('视频号');
   const ks = getSec('快手');
