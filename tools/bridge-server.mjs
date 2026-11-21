@@ -64,8 +64,8 @@ http.createServer(async (req, res) => {
     return send(res, 405, { ok: false, error: 'method not allowed' }, cors);
   }
 
-  // /cmd 与 /status 只接受本机非浏览器进程调用（禁止携带 Origin / Sec-Fetch-Mode）
-  if (origin || req.headers['sec-fetch-mode']) return send(res, 403, { ok: false, error: 'browser origin forbidden' });
+  // /cmd 与 /status 只接受本机非浏览器进程调用（禁止携带 Origin / Sec-Fetch-Site）
+  if (origin || req.headers['sec-fetch-site']) return send(res, 403, { ok: false, error: 'browser origin forbidden' });
   if (req.method === 'POST' && url.pathname === '/cmd') {
     if (req.headers['x-maitian-bridge'] !== '1') return send(res, 403, { ok: false, error: 'missing bridge header' });
     let cmd;
